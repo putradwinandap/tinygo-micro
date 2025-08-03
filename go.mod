@@ -1,4 +1,4 @@
-module github.com/putradwinandap/tinygo-micro/shared-lib
+module github.com/putradwinandap/tinygo-micro
 
 go 1.24.5
 
