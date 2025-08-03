@@ -8,8 +8,8 @@ require (
 )
 
 require (
-    github.com/rabbitmq/amqp091-go v1.10.0 // indirect
-    github.com/putradwinandap/tinygo-micro/shared-lib v0.0.0 // indirect
+	github.com/putradwinandap/tinygo-micro v0.0.0-20250803085810-7ea98c5422f6 // indirect
+	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 )
