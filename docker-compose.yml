@@ -1,0 +1,89 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: url_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tinygo_micro
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  analytics-db:
+    image: postgres:14
+    container_name: analytics_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tinygo_analytics
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - analytics_pgdata:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: url_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+
+  redis:
+    image: redis:7
+    container_name: url_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  url:
+    container_name: url_service
+    build:
+      context: ./services/url
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    ports:
+      - "8002:8002"
+    environment:
+      DB_URL: postgres://user:password@postgres:5432/tinygo_micro?sslmode=disable
+      PORT: 8002
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379
+    restart: unless-stopped
+
+  analytics:
+    container_name: analytics_service
+    build:
+      context: ./services/analytics
+      dockerfile: Dockerfile
+    depends_on:
+      - analytics-db
+      - rabbitmq
+      - redis
+    ports:
+      - "8003:8003"
+    environment:
+      DB_URL: postgres://user:password@analytics-db:5432/tinygo_analytics?sslmode=disable
+      PORT: 8003
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  analytics_pgdata:
+  redisdata:
