@@ -1,7 +1,10 @@
 package rabbitmq
 
 import (
+	"encoding/json"
+
 	amqp "github.com/rabbitmq/amqp091-go"
+	log "github.com/sirupsen/logrus"
 )
 
 type RabbitMQPublisher struct {
@@ -17,6 +20,9 @@ func NewRabbitMQPublisher(conn *amqp.Connection) *RabbitMQPublisher {
 func (p *RabbitMQPublisher) Publish(topic string, payload any) error {
 	ch, err := p.conn.Channel()
 	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Warn("Failed to open a channel")
 		return err
 	}
 	defer ch.Close()
@@ -34,6 +40,14 @@ func (p *RabbitMQPublisher) Publish(topic string, payload any) error {
 		return err
 	}
 
+	body, err := json.Marshal(payload)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Warn("Failed to marshal payload")
+		return err
+	}
+
 	err = ch.Publish(
 		"",     // exchange
 		q.Name, // routing key
@@ -41,11 +55,15 @@ func (p *RabbitMQPublisher) Publish(topic string, payload any) error {
 		false,  // immediate
 		amqp.Publishing{
 			ContentType: "application/json",
-			Body:        []byte(payload.(string)),
+			Body:        body,
 		},
 	)
 
 	if err != nil {
+
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Warn("Failed to publish message")
 		return err
 	}
 

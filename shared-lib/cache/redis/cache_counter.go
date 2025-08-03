@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
+	log "github.com/sirupsen/logrus"
 )
 
 type RedisCacheCounter struct {
@@ -18,6 +19,20 @@ func NewRedisCacheCounter(client *redis.Client) *RedisCacheCounter {
 
 func (c *RedisCacheCounter) Incr(ctx context.Context, key string) error {
 	_, err := c.client.Incr(ctx, key).Result()
+
+	if err == redis.Nil {
+		log.WithFields(log.Fields{
+			"key": key,
+		}).Warn("Key does not exist, initializing to 1")
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"key": key,
+			"err": err,
+		}).Error("Failed to increment key in Redis")
+	}
+
 	return err
 }
 

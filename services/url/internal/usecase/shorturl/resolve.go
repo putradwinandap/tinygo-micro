@@ -2,6 +2,7 @@ package shorturl
 
 import (
 	"context"
+	"fmt"
 
 	global_iface "github.com/putradwinandap/tinygo-micro/shared-lib/message_broker/iface"
 
@@ -33,15 +34,23 @@ func (uc *ResolveShortURLUseCase) Execute(shortcode string) (entity.ShortUrl, er
 	}
 
 	ctx := context.Background()
-
-	err = uc.cache.Incr(ctx, shortURL.ShortCode)
+	key := fmt.Sprintf("shorturl_visit:%d", shortURL.ID)
+	err = uc.cache.Incr(ctx, key)
 	if err != nil {
-		log.Warn("Failed to increment view count for shortcode:", shortURL.ShortCode, "Error:", err)
+		log.WithFields(log.Fields{
+			"key":   key,
+			"error": err,
+		}).Warn("Error incrementing view count in cache")
 	}
 
 	err = uc.rabbit.Publish("shorturl.resolved", shortURL)
 	if err != nil {
-		log.Warn("Failed to publish event for resolved short URL:", err)
+
+		log.WithFields(log.Fields{
+			"shortcode": shortcode,
+			"error":     err,
+		}).Warn("Failed to publish resolved short URL event")
+
 	}
 
 	return shortURL, nil

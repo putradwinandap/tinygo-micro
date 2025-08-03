@@ -16,9 +16,8 @@ func NewPostgresDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"omg":    true,
-			"number": 123,
-		}).Fatal("Failed to connect to the database:", err)
+			"err": err,
+		}).Fatal("Failed to connect to the database")
 		return nil, err
 	}
 	return db, nil
